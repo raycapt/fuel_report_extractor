@@ -66,6 +66,18 @@ Report:
     if results:
         df = pd.DataFrame(results)
         st.success("✅ Extraction complete!")
+        # Strip units from values (if present)
+df["Viscosity @ 40°C"] = df["Viscosity @ 40°C"].str.extract(r"([\d.]+)").astype(float)
+df["Sulfur %"] = df["Sulfur %"].str.extract(r"([\d.]+)").astype(float)
+df["Net Specific Energy"] = df["Net Specific Energy"].str.extract(r"([\d.]+)").astype(float)
+
+# Update column headers to include units
+df.rename(columns={
+    "Viscosity @ 40°C": "Viscosity @ 40°C (mm²/s)",
+    "Sulfur %": "Sulfur % (m/m)",
+    "Net Specific Energy": "Net Specific Energy (MJ/kg)"
+}, inplace=True)
+
         st.dataframe(df)
 
         # Download Excel
