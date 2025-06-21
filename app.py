@@ -1,7 +1,7 @@
 import streamlit as st
 import fitz  # PyMuPDF
 import pandas as pd
-import openai
+from openai import OpenAI
 import io
 
 st.set_page_config(page_title="Fuel Report Extractor", layout="centered")
@@ -12,7 +12,7 @@ openai_key = st.text_input("🔑 Enter your OpenAI API Key", type="password")
 uploaded_files = st.file_uploader("📄 Upload one or more Fuel Analysis PDFs", type="pdf", accept_multiple_files=True)
 
 if openai_key and uploaded_files:
-    openai.api_key = openai_key
+    client = OpenAI(api_key=openai_key)  # ✅ create client correctly
     results = []
 
     with st.spinner("Extracting data from uploaded PDFs using GPT-4..."):
@@ -49,17 +49,19 @@ Report:
 {text}
 """
             try:
-                response = openai.ChatCompletion.create(
+                response = client.chat.completions.create(
                     model="gpt-4",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0
                 )
+
                 extracted = response.choices[0].message.content.strip()
                 json_data = eval(extracted) if extracted.startswith('{') else {}
                 json_data["File Name"] = file.name
                 results.append(json_data)
+
             except Exception as e:
-                st.error(f"Failed to process {file.name}: {e}")
+                st.error(f"❌ Failed to process {file.name}: {e}")
 
     if results:
         df = pd.DataFrame(results)
@@ -70,6 +72,7 @@ Report:
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name="Fuel Analysis")
+
         st.download_button("📥 Download Excel", data=output.getvalue(), file_name="fuel_analysis_extracted.xlsx")
 else:
     st.info("Please enter your OpenAI key and upload PDF(s).")
