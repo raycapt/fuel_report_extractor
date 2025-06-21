@@ -65,6 +65,24 @@ Report:
 
     if results:
         df = pd.DataFrame(results)
+        import re
+
+# Clean numeric values by stripping units
+def extract_number(text):
+    matches = re.findall(r"[\d.]+", str(text))
+    return matches[0] if matches else None
+
+df["Viscosity @ 40°C"] = df["Viscosity @ 40°C"].apply(extract_number)
+df["Sulfur %"] = df["Sulfur %"].apply(extract_number)
+df["Net Specific Energy"] = df["Net Specific Energy"].apply(extract_number)
+
+# Update column headers to include units
+df.rename(columns={
+    "Viscosity @ 40°C": "Viscosity @ 40°C (mm²/s)",
+    "Sulfur %": "Sulfur % (m/m)",
+    "Net Specific Energy": "Net Specific Energy (MJ/kg)"
+}, inplace=True)
+
         st.success("✅ Extraction complete!")
         # Strip units from values (if present)
 df["Viscosity @ 40°C"] = df["Viscosity @ 40°C"].str.extract(r"([\d.]+)").astype(float)
